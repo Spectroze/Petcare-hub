@@ -1,377 +1,289 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Bell,
   Calendar,
-  ChevronDown,
   Dog,
   FileText,
   LayoutDashboard,
   MessageSquare,
   PieChart,
   Settings,
-  User,
+  Menu,
+  X,
+  Users,
+  Award,
+  BarChart2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { signOut } from "next-auth/react";
+import { toast } from "react-hot-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-export default function PetTraineeDashboard() {
-  const [activeSection, setActiveSection] = React.useState("overview");
+// Import additional components
+import Notifications from "../pet-traine/notification/page";
+import Stats from "../pet-traine/stats/page";
+import Schedule from "../pet-traine/schedule/page";
+import Profiles from "../pet-traine/profile/page";
+import Communication from "../pet-traine/communication/page";
+import Setting from "../pet-traine/setting/page";
 
-  const sidebarItems = [
-    { icon: LayoutDashboard, label: "Overview", value: "overview" },
-    { icon: Bell, label: "Notifications", value: "notifications" },
-    { icon: PieChart, label: "Quick Stats", value: "quickstats" },
-    { icon: Dog, label: "Progress Tracking", value: "progress" },
-    { icon: Calendar, label: "Schedule", value: "schedule" },
-    { icon: FileText, label: "Pet Profiles", value: "profiles" },
-    { icon: MessageSquare, label: "Communication", value: "communication" },
-    { icon: Settings, label: "Settings", value: "settings" },
+// Mock data for the chart
+const chartData = [
+  { name: "Jan", obedience: 65, agility: 40, socialization: 55 },
+  { name: "Feb", obedience: 70, agility: 45, socialization: 60 },
+  { name: "Mar", obedience: 75, agility: 50, socialization: 65 },
+  { name: "Apr", obedience: 80, agility: 60, socialization: 70 },
+  { name: "May", obedience: 85, agility: 65, socialization: 75 },
+  { name: "Jun", obedience: 90, agility: 70, socialization: 80 },
+];
+
+const PetTraining = ({ session }) => {
+  const handleSignOut = async () => {
+    try {
+      await signOut({ redirect: false });
+      window.location.href = "/";
+      toast.success("Successfully signed out.");
+    } catch (error) {
+      console.error("Failed to sign out:", error);
+      toast.error("Failed to sign out. Please try again.");
+    }
+  };
+
+  const [activeSection, setActiveSection] = useState("overview");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      type: "New",
+      message: "Max has completed basic obedience training!",
+    },
+    {
+      id: 2,
+      type: "Reminder",
+      message: "Training session with Bella tomorrow at 2 PM.",
+    },
+    {
+      id: 3,
+      type: "Alert",
+      message: "Charlie missed his last two training sessions.",
+    },
+  ]);
+
+  const nav = [
+    { icon: LayoutDashboard, title: "Overview", id: "overview" },
+    { icon: Bell, title: "Notifications", id: "notification" },
+    { icon: PieChart, title: "Stats", id: "stats" },
+    { icon: Calendar, title: "Schedule", id: "schedule" },
+    { icon: FileText, title: "Profiles", id: "profile" },
+    { icon: MessageSquare, title: "Communication", id: "communication" },
+    { icon: Settings, title: "Settings", id: "setting" },
   ];
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const filteredNavItems = nav.filter((item) =>
+    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const renderSidebarContent = () => (
+    <>
+      <div className="flex items-center h-16 px-6 border-b">
+        <Dog className="w-6 h-6 mr-2" />
+        <span className="text-lg font-semibold">Pet Trainer Pro</span>
+      </div>
+      <div className="p-4">
+        <Input
+          type="search"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="mb-4"
+        />
+      </div>
+      <nav className="p-4">
+        <ul className="space-y-2">
+          {filteredNavItems.map((item) => (
+            <li key={item.id}>
+              <Button
+                variant={activeSection === item.id ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => {
+                  setActiveSection(item.id);
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <item.icon className="w-4 h-4 mr-2" />
+                {item.title}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </>
+  );
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <aside className="w-64 border-r bg-muted/40">
-        <div className="flex items-center h-16 px-6 border-b">
-          <Dog className="w-6 h-6 mr-2" />
-          <span className="text-lg font-semibold">Pet Trainer Pro</span>
-        </div>
-        <nav className="p-4">
-          <ul className="space-y-2">
-            {sidebarItems.map((item) => (
-              <li key={item.value}>
-                <Button
-                  variant={activeSection === item.value ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => setActiveSection(item.value)}
-                >
-                  <item.icon className="w-4 h-4 mr-2" />
-                  {item.label}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+      {/* Sidebar for desktop */}
+      <aside
+        className={`hidden md:block w-64 border-r bg-muted/40 ${
+          sidebarOpen ? "" : "hidden"
+        }`}
+      >
+        {renderSidebarContent()}
       </aside>
+
+      {/* Mobile menu */}
+      <div
+        className={`fixed inset-0 z-50 bg-background md:hidden ${
+          isMobileMenuOpen ? "block" : "hidden"
+        }`}
+      >
+        <div className="flex justify-end p-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+        </div>
+        {renderSidebarContent()}
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="flex items-center justify-between h-16 px-6 border-b">
-          <h1 className="text-2xl font-bold">Pet Trainee Dashboard</h1>
-          <Avatar>
-            <AvatarImage src="/placeholder-user.jpg" alt="User" />
-            <AvatarFallback>JD</AvatarFallback>
-          </Avatar>
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden mr-2"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+            <h1 className="text-2xl font-bold">Pet Trainee Dashboard</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Bell className="h-5 w-5" />
+                  <span className="sr-only">Notifications</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                {notifications.map((notification) => (
+                  <DropdownMenuItem
+                    key={notification.id}
+                    className="flex items-start p-3"
+                    onClick={() => setActiveSection("notification")}
+                  >
+                    <Badge variant="secondary" className="mt-0.5 mr-2">
+                      {notification.type}
+                    </Badge>
+                    <span className="text-sm">{notification.message}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar>
+                    <AvatarImage src="/placeholder-user.jpg" alt="User" />
+                    <AvatarFallback>JD</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setActiveSection("profile")}>
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </header>
 
-        {/* Content Area */}
-        <ScrollArea className="flex-1 p-6">
+        {/* Main content based on active section */}
+        <div className="flex-1 overflow-auto p-4">
           {activeSection === "overview" && (
             <Card>
               <CardHeader>
-                <CardTitle>Overview</CardTitle>
+                <CardTitle>Training Overview</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Active Trainees:</span>
-                    <span className="font-bold">12</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Completed Trainings:</span>
-                    <span className="font-bold">45</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Upcoming Sessions:</span>
-                    <span className="font-bold">8</span>
-                  </div>
-                </div>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="obedience"
+                      stroke="#8884d8"
+                    />
+                    <Line type="monotone" dataKey="agility" stroke="#82ca9d" />
+                    <Line
+                      type="monotone"
+                      dataKey="socialization"
+                      stroke="#ffc658"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </CardContent>
             </Card>
           )}
-
-          {activeSection === "notifications" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Notifications</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[300px]">
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-2">
-                      <Badge variant="secondary">New</Badge>
-                      <p className="text-sm">
-                        Max has completed basic obedience training!
-                      </p>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Badge variant="secondary">Reminder</Badge>
-                      <p className="text-sm">
-                        Training session with Bella tomorrow at 2 PM.
-                      </p>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <Badge variant="secondary">Alert</Badge>
-                      <p className="text-sm">
-                        Charlie missed his last two training sessions.
-                      </p>
-                    </div>
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeSection === "quickstats" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium">
-                        Overall Progress
-                      </span>
-                      <span className="text-sm font-medium">75%</span>
-                    </div>
-                    <Progress value={75} />
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium">
-                        Attendance Rate
-                      </span>
-                      <span className="text-sm font-medium">90%</span>
-                    </div>
-                    <Progress value={90} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeSection === "progress" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Progress Tracking</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium">Obedience</span>
-                      <span className="text-sm font-medium">80%</span>
-                    </div>
-                    <Progress value={80} />
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium">Agility</span>
-                      <span className="text-sm font-medium">60%</span>
-                    </div>
-                    <Progress value={60} />
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium">Socialization</span>
-                      <span className="text-sm font-medium">70%</span>
-                    </div>
-                    <Progress value={70} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeSection === "schedule" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Schedule</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-5 w-5 text-muted-foreground" />
-                      <span>Today, 2:00 PM</span>
-                    </div>
-                    <span className="text-sm font-medium">
-                      Obedience Training with Max
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-5 w-5 text-muted-foreground" />
-                      <span>Tomorrow, 10:00 AM</span>
-                    </div>
-                    <span className="text-sm font-medium">
-                      Agility Session with Bella
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-5 w-5 text-muted-foreground" />
-                      <span>June 25, 3:30 PM</span>
-                    </div>
-                    <span className="text-sm font-medium">
-                      Socialization Class
-                    </span>
-                  </div>
-                </div>
-                <Button className="w-full mt-4">View Full Calendar</Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeSection === "profiles" && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Pet Profiles</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-4">
-                    {["Max", "Bella", "Charlie", "Luna", "Rocky", "Daisy"].map(
-                      (pet, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-4 p-2 rounded-lg hover:bg-accent"
-                        >
-                          <Avatar>
-                            <AvatarImage
-                              src={`/placeholder-pet-${index + 1}.jpg`}
-                              alt={pet}
-                            />
-                            <AvatarFallback>{pet[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <h4 className="font-medium">{pet}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Golden Retriever, 2 years old
-                            </p>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            View Profile
-                          </Button>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeSection === "communication" && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Messages</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {["John Doe", "Jane Smith", "Mike Johnson"].map(
-                      (name, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-4 p-2 rounded-lg hover:bg-accent"
-                        >
-                          <Avatar>
-                            <AvatarImage
-                              src={`/placeholder-user-${index + 1}.jpg`}
-                              alt={name}
-                            />
-                            <AvatarFallback>{name[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <h4 className="font-medium">{name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              Last message: 2 hours ago
-                            </p>
-                          </div>
-                          <Button variant="outline" size="sm">
-                            View
-                          </Button>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Feedback Forms</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Button className="w-full">
-                      Submit Training Session Feedback
-                    </Button>
-                    <Button className="w-full" variant="outline">
-                      View Previous Feedback
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {activeSection === "settings" && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Account Settings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Button className="w-full flex items-center justify-center space-x-2">
-                      <User className="h-5 w-5" />
-                      <span>Edit Profile</span>
-                    </Button>
-                    <Button
-                      className="w-full flex items-center justify-center space-x-2"
-                      variant="outline"
-                    >
-                      <Settings className="h-5 w-5" />
-                      <span>Notification Preferences</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Integrations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Button className="w-full flex items-center justify-center space-x-2">
-                      <Calendar className="h-5 w-5" />
-                      <span>Sync External Calendar</span>
-                    </Button>
-                    <Button
-                      className="w-full flex items-center justify-center space-x-2"
-                      variant="outline"
-                    >
-                      <Dog className="h-5 w-5" />
-                      <span>Connect Pet Tracking Device</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </ScrollArea>
+          {activeSection === "notification" && <Notifications />}
+          {activeSection === "stats" && <Stats />}
+          {activeSection === "schedule" && <Schedule />}
+          {activeSection === "profile" && <Profiles />}
+          {activeSection === "communication" && <Communication />}
+          {activeSection === "setting" && <Setting />}
+        </div>
       </main>
     </div>
   );
-}
+};
+
+export default PetTraining;

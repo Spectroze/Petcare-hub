@@ -1,239 +1,283 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Bell as NotificationIcon,
+  Calendar as CalendarIcon,
+  FileText as HealthIcon,
+  Star as FeedbackIcon,
+  Clipboard as CarePlanIcon,
+  Settings as SettingsIcon,
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  User,
+  DollarSign,
+  MessageSquare,
+  Star,
+  PlusCircle,
+  Pencil,
+  Trash2,
+  Save,
+  Menu,
+} from "lucide-react";
+import Profile from "../user-dashboard/profile/page";
+import Records from "../user-dashboard/records/page";
+import Notification from "../user-dashboard/notification/page";
+import Feedback from "../user-dashboard/feedback/page";
+import Setting from "../user-dashboard/setting/page";
+import Message from "../user-dashboard/message/page";
+import Billing from "../user-dashboard/billing/page";
+import AppointmentManager from "../user-dashboard/appointment/page";
+
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PawPrint, Check, X } from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "react-hot-toast";
 
-export default function Signup() {
-  const router = useRouter();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [userType, setUserType] = useState("user"); // Default user type
-  const [error, setError] = useState("");
-  const [validations, setValidations] = useState({
-    length: false,
-    lowercase: false,
-    uppercase: false,
-    number: false,
-    special: false,
+const PetCareDashboard = ({ session }) => {
+  const [activeSection, setActiveSection] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [appointments, setAppointments] = useState([
+    { id: 1, date: "2023-06-15", time: "10:00", reason: "Annual checkup" },
+    { id: 2, date: "2023-06-20", time: "14:30", reason: "Vaccination" },
+  ]);
+  const [editingAppointment, setEditingAppointment] = useState(null);
+  const [newAppointment, setNewAppointment] = useState({
+    date: "",
+    time: "",
+    reason: "",
   });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    setValidations({
-      length: password.length >= 8,
-      lowercase: /[a-z]/.test(password),
-      uppercase: /[A-Z]/.test(password),
-      number: /[0-9]/.test(password),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-    });
-  }, [password]);
+  const nav = [
+    { icon: Home, title: "Overview", id: "overview" },
+    { icon: User, title: "Profile", id: "profile" },
+    { icon: CalendarIcon, title: "Appointments", id: "appointment" },
+    { icon: HealthIcon, title: "Records", id: "records" },
+    { icon: NotificationIcon, title: "Notification", id: "notification" },
+    { icon: FeedbackIcon, title: "Feedback", id: "feedback" },
+    { icon: SettingsIcon, title: "Setting", id: "setting" },
+    { icon: MessageSquare, title: "Message", id: "message" },
+    { icon: DollarSign, title: "Billing", id: "billing" },
+  ];
 
-  const isValidEmail = (email) => {
-    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-    return emailRegex.test(email);
+  const handleAppointmentRedirect = () => {
+    setActiveSection("appointment");
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleEditAppointment = (appointment) => {
+    setEditingAppointment({ ...appointment });
+  };
 
-    if (!isValidEmail(email)) {
-      setError("Email is invalid");
-      toast.error("Email is invalid");
-      return;
-    }
-
-    if (!isFormValid) {
-      setError("Password is invalid");
-      toast.error("Password does not meet the requirements");
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          userType, // Send userType (admin/user)
-        }),
+  const handleSaveAppointment = () => {
+    if (editingAppointment) {
+      setAppointments(
+        appointments.map((app) =>
+          app.id === editingAppointment.id ? editingAppointment : app
+        )
+      );
+      setEditingAppointment(null);
+      toast({
+        title: "Appointment Updated",
+        description: "Your appointment has been successfully updated.",
       });
-
-      if (res.status === 400) {
-        setError("This email is already registered");
-        toast.error("This email is already registered");
-      } else if (res.status === 200) {
-        setError("");
-        toast.success("Account created successfully!");
-        const role = await res.json().user.role;
-
-        // Redirect based on role
-        if (role === "admin") {
-          router.push("/admin-dashboard");
-        } else {
-          router.push("/user-dashboard");
-        }
-      } else {
-        toast.error("Failed to create account, try again");
-      }
-    } catch (error) {
-      setError("Error, try again");
-      toast.error("Error, please try again");
-      console.log(error);
+    } else {
+      const newId = Math.max(...appointments.map((app) => app.id), 0) + 1;
+      setAppointments([...appointments, { ...newAppointment, id: newId }]);
+      setNewAppointment({ date: "", time: "", reason: "" });
+      setIsDialogOpen(false);
+      toast({
+        title: "Appointment Scheduled",
+        description: "Your new appointment has been successfully scheduled.",
+      });
     }
   };
 
-  const handleLogInClick = () => {
-    router.push("/login"); // Adjust the route if necessary
+  const handleDeleteAppointment = (id) => {
+    setAppointments(appointments.filter((app) => app.id !== id));
+    toast({
+      title: "Appointment Deleted",
+      description: "Your appointment has been successfully deleted.",
+      variant: "destructive",
+    });
   };
-
-  const ValidationItem = ({ isValid, text }) => (
-    <div
-      className={`flex items-center ${
-        isValid ? "text-green-500" : "text-red-500"
-      }`}
-    >
-      {isValid ? <Check size={16} /> : <X size={16} />}
-      <span className="ml-2 text-sm">{text}</span>
-    </div>
-  );
-
-  const isFormValid = Object.values(validations).every(Boolean);
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-purple-500">
-      <div className="m-auto bg-white rounded-xl shadow-2xl overflow-hidden max-w-4xl w-full flex">
-        <div className="w-1/2 p-12 bg-gradient-to-br from-blue-600 to-purple-600 text-white flex flex-col justify-center items-center">
-          <div className="bg-white rounded-full p-5 mb-8 shadow-lg">
-            <PawPrint className="h-16 w-16 text-blue-600" />
-          </div>
-          <h1 className="text-4xl font-bold mb-4 text-center">
-            Welcome to Pet-Care
-          </h1>
-          <p className="text-blue-100 text-center max-w-xs mx-auto">
-            Your trusted partner in pet health and happiness. Join us to access
-            premium pet care services and expert advice.
-          </p>
-        </div>
-        <div className="w-1/2 p-12">
-          <h2 className="text-3xl font-semibold mb-6 text-gray-800">
-            Create your account
-          </h2>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <Label
-                htmlFor="name"
-                className="text-sm font-medium text-gray-700"
-              >
-                Username
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="username"
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <aside
+        className={`bg-teal-700 text-white ${
+          sidebarOpen ? "w-64" : "w-20"
+        } min-h-screen p-4 transition-all duration-300 ease-in-out`}
+      >
+        <div className="flex flex-col h-full">
+          {/* User Profile */}
+          <div className="flex flex-col items-center space-y-2 mb-6">
+            <Avatar className="h-20 w-20">
+              <AvatarImage
+                src="/placeholder.svg?height=80&width=80"
+                alt="User"
               />
-            </div>
-            <div>
-              <Label
-                htmlFor="email"
-                className="text-sm font-medium text-gray-700"
-              >
-                E-mail Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                placeholder="email"
-              />
-            </div>
-            <div>
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium text-gray-700"
-              >
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`mt-1 w-full border-2 focus:ring-blue-500 ${
-                  password
-                    ? isFormValid
-                      ? "border-green-500"
-                      : "border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder="password"
-              />
-              <div className="mt-2 space-y-1">
-                <ValidationItem
-                  isValid={validations.length}
-                  text="At least 8 characters"
-                />
-                <ValidationItem
-                  isValid={validations.lowercase}
-                  text="Contains one lowercase letter"
-                />
-                <ValidationItem
-                  isValid={validations.uppercase}
-                  text="Contains one uppercase letter"
-                />
-                <ValidationItem
-                  isValid={validations.number}
-                  text="Contains one number"
-                />
-                <ValidationItem
-                  isValid={validations.special}
-                  text="Contains one special character (@, #, $, etc.)"
-                />
+              <AvatarFallback>JD</AvatarFallback>
+            </Avatar>
+            {sidebarOpen && (
+              <div className="text-center">
+                <p className="text-sm font-medium">John Doe</p>
+                <p className="text-xs text-teal-200">Pet Parent</p>
               </div>
-            </div>
-            <div></div>
-            {error && <p className="text-red-500">{error}</p>}
+            )}
+          </div>
+
+          {/* Navigation */}
+          <nav className="space-y-2 flex-1">
+            {nav.map(({ icon: Icon, title, id }) => (
+              <Button
+                key={id}
+                variant={activeSection === id ? "secondary" : "ghost"}
+                className={`w-full justify-start ${!sidebarOpen && "px-2"} ${
+                  activeSection === id ? "bg-teal-600" : "hover:bg-teal-600"
+                }`}
+                onClick={() => setActiveSection(id)}
+              >
+                <Icon className={`h-5 w-5 ${sidebarOpen && "mr-2"}`} />
+                {sidebarOpen && <span>{title}</span>}
+              </Button>
+            ))}
+          </nav>
+
+          {/* Sidebar Toggle */}
+          <div className="flex justify-center mt-4">
             <Button
-              type="submit"
-              disabled={!isFormValid}
-              className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg ${
-                !isFormValid ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              variant="outline"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="bg-teal-600 text-white hover:bg-teal-500"
             >
-              Create Account
+              {sidebarOpen ? <ChevronLeft /> : <ChevronRight />}
             </Button>
-          </form>
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Already have an account?{" "}
-            <a
-              onClick={handleLogInClick}
-              className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer"
-            >
-              Log in here
-            </a>
-          </p>
+          </div>
         </div>
-      </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-4 overflow-y-auto">
+        {/* Toggle Button for Mobile */}
+        <Button
+          variant="outline"
+          className="lg:hidden mb-4 bg-teal-500 text-white hover:bg-teal-600"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
+
+        {/* Render content based on activeSection */}
+        {activeSection === "overview" && (
+          <div className="space-y-4">
+            <Card className="bg-white shadow-md">
+              <CardHeader className="bg-teal-600 text-white">
+                <CardTitle>Overview</CardTitle>
+                <CardDescription className="text-teal-100">
+                  Quick snapshot of your pet care information
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Card className="bg-emerald-50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-emerald-800">
+                        Upcoming Appointments
+                      </CardTitle>
+                      <CalendarIcon className="h-4 w-4 text-emerald-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-emerald-700">
+                        {appointments.length}
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-cyan-50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-cyan-800">
+                        Active Care Plans
+                      </CardTitle>
+                      <CarePlanIcon className="h-4 w-4 text-cyan-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-cyan-700">2</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-amber-50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-amber-800">
+                        Unread Messages
+                      </CardTitle>
+                      <MessageSquare className="h-4 w-4 text-amber-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-amber-700">5</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-fuchsia-50">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-fuchsia-800">
+                        Pending Reviews
+                      </CardTitle>
+                      <Star className="h-4 w-4 text-fuchsia-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-fuchsia-700">
+                        1
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <Card className="md:col-span-2 lg:col-span-4 bg-white">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium text-teal-600">
+                        My Appointments
+                      </CardTitle>
+                      <PlusCircle className="h-4 w-4 text-teal-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        className="w-full bg-teal-500 hover:bg-teal-600 text-white"
+                        onClick={handleAppointmentRedirect}
+                      >
+                        Manage Appointments
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {activeSection === "profile" && <Profile />}
+        {activeSection === "appointment" && <AppointmentManager />}
+        {activeSection === "records" && <Records />}
+        {activeSection === "notification" && <Notification />}
+        {activeSection === "feedback" && <Feedback />}
+        {activeSection === "setting" && <Setting />}
+        {activeSection === "message" && <Message />}
+        {activeSection === "billing" && <Billing />}
+      </main>
     </div>
   );
-}
+};
+
+export default PetCareDashboard;

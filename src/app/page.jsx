@@ -15,18 +15,26 @@ export default function Login() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  // If the user is already logged in, redirect based on userType
   if (session) {
-    if (session.user.userType === "pet-admin") {
-      router.push("/admin");
-    } else {
-      router.push("/homepage");
+    switch (session.user.userType) {
+      case "pet-admin":
+        router.push("/admin");
+        break;
+      case "pet-owner":
+        router.push("/user-dashboard");
+        break;
+      case "pet-training":
+        router.push("/pet-traine");
+        break;
+      default:
+        router.push("/homepage");
+        break;
     }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Reset error before new attempt
+    setError(null);
 
     const result = await signIn("credentials", {
       redirect: false, // Prevent auto-redirect
@@ -37,12 +45,11 @@ export default function Login() {
     if (result.error) {
       setError("Invalid email or password");
     } else {
-      // After successful login, check the userType for redirection
       const userType = session?.user?.userType;
       if (userType === "pet-admin") {
-        router.push("/admin"); // Redirect admin users to admin dashboard
+        router.push("/admin");
       } else {
-        router.push("/homepage"); // Redirect regular users to homepage
+        router.push("/homepage");
       }
     }
   };
@@ -58,7 +65,12 @@ export default function Login() {
 
   return (
     <div>
-      <div className="flex h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-purple-500">
+      <div
+        className="flex h-screen bg-cover bg-center"
+        style={{
+          backgroundImage: "url('/E.jpg')",
+        }}
+      >
         <div className="m-auto bg-white rounded-xl shadow-2xl overflow-hidden max-w-4xl w-full flex">
           <div className="w-1/2 p-12">
             <h2 className="text-3xl font-semibold mb-6 text-gray-800">

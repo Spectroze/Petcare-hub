@@ -1,13 +1,14 @@
 import React from "react";
 import Sidebar from "./Sidebar"; // Adjust import accordingly
+import { Button } from "@/components/ui/button";
 import {
-  Button,
   Card,
   CardHeader,
   CardTitle,
+  CardDescription,
   CardContent,
   CardFooter,
-} from "./UIComponents"; // Adjust import accordingly
+} from "@/components/ui/card";
 
 export default function page() {
   const [sidebarOpen, setSidebarOpen] = useState(true);

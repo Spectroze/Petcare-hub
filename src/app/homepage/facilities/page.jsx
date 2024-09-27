@@ -4,7 +4,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@radix-ui/react-tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 
-// Facility360View Component
 const Facility360View = ({ src }) => (
   <div className="aspect-video relative rounded-lg overflow-hidden shadow-lg">
     <iframe

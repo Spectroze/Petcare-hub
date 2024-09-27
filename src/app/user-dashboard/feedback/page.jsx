@@ -9,7 +9,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 
-// Import the specific Star icon from react-icons
 import { FaStar } from "react-icons/fa";
 
 export default function Feedback() {

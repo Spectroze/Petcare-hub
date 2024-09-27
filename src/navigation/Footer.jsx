@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react"; // Ensure useState and useEffect are imported
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession, signOut as nextAuthSignOut } from "next-auth/react";
 import {
   Facebook,
   Instagram,
@@ -11,16 +13,26 @@ import {
 } from "lucide-react";
 
 export default function Footer() {
-  const [isClient, setIsClient] = useState(false); // State to check if it's client-side rendering
+  const [isClient, setIsClient] = useState(false);
+  const pathname = usePathname();
+  const { data: session } = useSession();
 
-  // Ensure the component runs only on the client side
+  const whiteListedPaths = [
+    "/",
+    "/signup",
+    "/appointment",
+    "/user-dashboard",
+    "/admin",
+    "/pet-traine",
+  ];
+
+  const hideFooter = whiteListedPaths.includes(pathname);
+
   useEffect(() => {
-    setIsClient(true); // Set client-side flag after rendering
+    setIsClient(true);
   }, []);
 
-  if (!isClient) {
-    return null; // Avoid rendering the component on the server
-  }
+  if (!isClient || hideFooter) return null;
 
   return (
     <footer className="bg-primary text-primary-foreground">
